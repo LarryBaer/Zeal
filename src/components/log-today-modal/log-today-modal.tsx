@@ -33,14 +33,14 @@ export default function LogTodayModal({
       await logHabit(habitId, Number(timeTracked));
       updateHabits();
     } catch (e) {
-      alert("Failed to save the file !");
+      alert("Logging habit failed, please try again.");
     }
 
     onClose();
   }
 
   useEffect(() => {
-    setTimeTracked(timerCount.toString());
+    setTimeTracked(Math.ceil(timerCount / 60).toString());
   }, [timerCount]);
 
   return (
@@ -50,11 +50,15 @@ export default function LogTodayModal({
         <ModalHeader>Log today</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Input
-            placeholder="Time tracked"
-            value={timeTracked}
-            onChange={(e) => setTimeTracked(e.target.value)}
-          ></Input>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Input
+              placeholder="Enter minutes tracked..."
+              value={timeTracked}
+              onChange={(e) => setTimeTracked(e.target.value)}
+              style={{ marginRight: 10 }}
+            ></Input>
+            <p>minutes</p>
+          </div>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" onClick={() => logToday()}>

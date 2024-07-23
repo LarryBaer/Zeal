@@ -9,9 +9,11 @@ import {
   ModalHeader,
   ModalOverlay,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createHabit } from "../../database/database";
 import "./create-habit-modal.css";
+import { CirclePicker } from "react-color";
+import ColorPicker from "../color-picker/color-picker";
 
 type CreateHabitModalProps = {
   isOpen: boolean;
@@ -25,13 +27,16 @@ export default function CreateHabitModal({
   updateHabits,
 }: CreateHabitModalProps) {
   const [habitName, setHabitName] = useState("");
+  const [color, setColor] = useState("blue");
 
   async function onCreateHabit() {
     try {
-      await createHabit(habitName, "");
+      await createHabit(habitName, color);
       updateHabits();
+      setHabitName("");
+      setColor("blue");
     } catch (e) {
-      alert("Failed to save the file!");
+      alert("Creating habit failed, please try again.");
     }
 
     onClose();
@@ -49,6 +54,10 @@ export default function CreateHabitModal({
             value={habitName}
             onChange={(e) => setHabitName(e.target.value)}
           ></Input>
+          <div style={{ marginTop: 20 }}>
+            <b>Choose a color</b>
+            <ColorPicker color={color} setColor={setColor} />
+          </div>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="blue" onClick={() => onCreateHabit()}>

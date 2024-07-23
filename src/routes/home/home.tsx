@@ -12,20 +12,17 @@ import DeleteHabitModal from "../../components/delete-habit-modal/delete-habit-m
 import LogTodayModal from "../../components/log-today-modal/log-today-modal";
 import { useEffect, useState } from "react";
 import { getHabits, getHeatmapData } from "../../database/database";
+import getColorMap from "../../utils/color-util";
 import "./home.css";
 
 export default function Home() {
   const [isStopwatchEnabled, setIsStopwatchEnabled] = useState(false);
   const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
-  const [habitToEditId, setHabitToEditId] = useState();
-  const [habitToDeleteName, setHabitToDeleteName] = useState("");
+  const [habitToEdit, setHabitToEdit] = useState<any>({});
   const [time, setTime] = useState(0);
   const [habits, setHabits] = useState<any[]>([]);
   const [heatmapData, setHeatmapData] = useState<any[]>([]);
   const [searchValue, setSearchValue] = useState("");
-  const hours = Math.floor(time / 3600);
-  const minutes = Math.floor((time % 3600) / 60);
-  const seconds = Math.floor(time % 60);
 
   const {
     isOpen: isCreateOpen,
@@ -55,28 +52,12 @@ export default function Home() {
     setHeatmapData(newHeatmapData as any[]);
   }
 
-  function getPanelColors(habitHeatmapValues: any[]) {
-    let numbers = habitHeatmapValues.map((a: any) => a.count);
-    const min = Math.min(...numbers);
-    const max = Math.max(...numbers);
+  function startAndStopTimer() {
+    setIsStopwatchRunning(!isStopwatchRunning);
+  }
 
-    const one = Math.floor(min + (max - min) * 0.1);
-    const two = Math.floor(min + (max - min) * 0.25);
-    const three = Math.floor(min + (max - min) * 0.4);
-    const four = Math.floor(min + (max - min) * 0.65);
-    const five = Math.floor(min + (max - min) * 0.75);
-    const six = Math.floor(min + (max - min) * 0.9);
-
-    const thresholds: Record<number, string> = {
-      [one]: "#ecfdf5",
-      [two]: "#d1fae5",
-      [three]: "#99f6e4",
-      [four]: "#5eead4",
-      [five]: "#2dd4bf",
-      [six]: "#14b8a6",
-    };
-
-    return thresholds;
+  function resetStopwatch() {
+    setTime(0);
   }
 
   useEffect(() => {
@@ -91,14 +72,6 @@ export default function Home() {
     }
     return () => clearInterval(intervalId);
   }, [isStopwatchRunning, time]);
-
-  const startAndStopTimer = () => {
-    setIsStopwatchRunning(!isStopwatchRunning);
-  };
-
-  const resetStopwatch = () => {
-    setTime(0);
-  };
 
   return (
     <div className="home">
@@ -120,6 +93,9 @@ export default function Home() {
       <div className="habit-container">
         {habits.map((habit, index) => {
           if (searchValue !== "" && !habit.name.includes(searchValue)) return;
+          const habitHeatmapData = heatmapData.filter(
+            (obj) => obj.habit_id === habit.habit_id
+          );
           return (
             <div className="habit" key={"habit" + index}>
               <div className="habit-header">
@@ -131,8 +107,7 @@ export default function Home() {
                 <div
                   className="close-icon"
                   onClick={() => {
-                    setHabitToEditId(habit.habit_id);
-                    setHabitToDeleteName(habit.name);
+                    setHabitToEdit(habit);
                     onDeleteOpen();
                   }}
                 >
@@ -141,9 +116,7 @@ export default function Home() {
               </div>
               <div className="heatmap">
                 <HeatMap
-                  value={heatmapData.filter(
-                    (obj) => obj.habit_id === habit.habit_id
-                  )}
+                  value={habitHeatmapData}
                   weekLabels={["", "Mon", "", "Wed", "", "Fri", ""]}
                   startDate={new Date("2024/01/01")}
                   endDate={new Date("2024/12/30")}
@@ -151,9 +124,7 @@ export default function Home() {
                   height={160}
                   rectSize={15}
                   space={2.5}
-                  panelColors={getPanelColors(
-                    heatmapData.filter((obj) => obj.habit_id === habit.habit_id)
-                  )}
+                  panelColors={getColorMap(habit.color, habitHeatmapData)}
                   rectRender={(props, data) => {
                     return (
                       <Tooltip label={data.date} placement="right">
@@ -182,8 +153,14 @@ export default function Home() {
                         Reset
                       </Button>
                       <div className="timer-box">
-                        {hours}:{minutes.toString().padStart(2, "0")}:
-                        {seconds.toString().padStart(2, "0")}
+                        {Math.floor(time / 3600)}:
+                        {Math.floor((time % 3600) / 60)
+                          .toString()
+                          .padStart(2, "0")}
+                        :
+                        {Math.floor(time % 60)
+                          .toString()
+                          .padStart(2, "0")}
                       </div>
                     </div>
                   ) : (
@@ -200,7 +177,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setHabitToEditId(habit.habit_id);
+                    setHabitToEdit(habit);
                     onLogOpen();
                   }}
                 >
@@ -220,14 +197,13 @@ export default function Home() {
         isOpen={isDeleteOpen}
         onClose={onDeleteClose}
         updateHabits={getHabitData}
-        habitName={habitToDeleteName}
-        habitId={habitToEditId}
+        habit={habitToEdit}
       />
       <LogTodayModal
         isOpen={isLogOpen}
         onClose={onLogClose}
         updateHabits={getHabitHeatmapData}
-        habitId={habitToEditId}
+        habitId={habitToEdit.habit_id}
         timerCount={time}
       />
     </div>

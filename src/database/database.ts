@@ -2,25 +2,25 @@ const sqlite3 = window.require("sqlite3").verbose();
 const fs = window.require("fs");
 const databasePath = "src/database/database.db";
 
-async function execute(sql: string, params: any, callName: string) {
+async function execute(sql: string, params: any[], callName: string) {
   if (!fs.existsSync(databasePath)) await createDatabase();
 
   const db = new sqlite3.Database(
     databasePath,
     sqlite3.OPEN_READWRITE,
-    (err: any) => {
+    (err: Error) => {
       if (err) return console.error(err.message);
     }
   );
 
   return new Promise((resolve, reject) => {
     db.serialize(() => {
-      db.run("PRAGMA foreign_keys = ON", [], (err: any) => {
-        if (err) console.log(err);
+      db.run("PRAGMA foreign_keys = ON", [], (err: Error) => {
+        if (err) console.error(err.message);
       });
-      db[callName](sql, params, (err: any, rows: any) => {
+      db[callName](sql, params, (err: Error, rows: any) => {
         if (err) return console.error(err.message);
-        db.close((err: any) => {
+        db.close((err: Error) => {
           if (err) return console.error(err.message);
         });
 
@@ -47,10 +47,10 @@ export async function getHabits() {
 }
 
 export async function deleteHabit(habitId: number) {
-  const sqlOne = `DELETE FROM heatmap_data WHERE habit_id=${habitId}`;
-  await execute(sqlOne, [], "run");
-  const sql = `DELETE FROM habits WHERE habit_id=${habitId}`;
-  await execute(sql, [], "run");
+  const deleteHeatmapSql = `DELETE FROM heatmap_data WHERE habit_id=${habitId}`;
+  const deleteHabitSql = `DELETE FROM habits WHERE habit_id=${habitId}`;
+  await execute(deleteHeatmapSql, [], "run");
+  await execute(deleteHabitSql, [], "run");
 }
 
 export async function getHeatmapData() {
@@ -66,7 +66,7 @@ export async function logHabit(habitId: number, count: number) {
 }
 
 async function createDatabase() {
-  await fs.writeFile(databasePath, "", function (err: any) {
+  await fs.writeFile(databasePath, "", function (err: Error) {
     if (err) throw err;
   });
 

@@ -10,27 +10,25 @@ import {
 } from "@chakra-ui/react";
 import { deleteHabit } from "../../database/database";
 
-type CreateHabitModalProps = {
+type DeleteHabitModalProps = {
   isOpen: boolean;
   onClose: () => void;
   updateHabits: () => void;
-  habitName: string;
-  habitId: number;
+  habit: any;
 };
 
 export default function DeleteHabitModal({
   isOpen,
   onClose,
   updateHabits,
-  habitName,
-  habitId,
-}: CreateHabitModalProps) {
+  habit,
+}: DeleteHabitModalProps) {
   async function onDelete() {
     try {
-      await deleteHabit(habitId);
+      await deleteHabit(habit.habit_id);
       updateHabits();
     } catch (e) {
-      alert("Failed to save the file !");
+      alert("Deleting habit failed, please try again.");
     }
 
     onClose();
@@ -43,7 +41,7 @@ export default function DeleteHabitModal({
         <ModalHeader>Delete habit</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <div>{`Are you sure you would like to delete "${habitName}"? This action cannot be undone.`}</div>
+          <div>{`Are you sure you would like to delete "${habit.name}"? This action cannot be undone.`}</div>
         </ModalBody>
         <ModalFooter>
           <Button style={{ marginRight: 10 }} onClick={onClose}>
